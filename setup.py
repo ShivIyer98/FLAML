@@ -42,6 +42,9 @@ setuptools.setup(
             "rgf-python",
             "catboost>=0.26",
         ],
+        "diagnose": [
+            "matplotlib",
+        ],
         "test": [
             "flake8>=3.8.4",
             "pytest>=6.1.1",
