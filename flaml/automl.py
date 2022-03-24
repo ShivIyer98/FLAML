@@ -2310,7 +2310,7 @@ class AutoML(BaseEstimator):
         logger.setLevel(old_level)
 
     def diagnose(self, level=0):
-        """ 
+        """
         Diagnose AutoML.
 
         Args:
@@ -2322,39 +2322,46 @@ class AutoML(BaseEstimator):
         """
         import matplotlib.pyplot as plt
         from flaml.data import get_output_from_log
+
         if level == 0:
             # provide the most basic visualization, i.e., the learning curve
-            log_file_name = self._settings['log_file_name']        
-            time_history, best_valid_loss_history, valid_loss_history, config_history, metric_history = \
-                get_output_from_log(filename=log_file_name, time_budget=self._settings['time_budget'])
-            plt.title('Learning Curve')
-            plt.xlabel('Wall Clock Time (s)')
-            plt.ylabel('Validation Accuracy')
+            log_file_name = self._settings["log_file_name"]
+            (
+                time_history,
+                best_valid_loss_history,
+                valid_loss_history,
+                config_history,
+                metric_history,
+            ) = get_output_from_log(
+                filename=log_file_name, time_budget=self._settings["time_budget"]
+            )
+            plt.title("Learning Curve")
+            plt.xlabel("Wall Clock Time (s)")
+            plt.ylabel("Validation Accuracy")
             plt.scatter(time_history, 1 - np.array(valid_loss_history))
-            plt.step(time_history, 1 - np.array(best_valid_loss_history), where='post')
-            plt.savefig(log_file_name.replace('.log', '.pdf'))
-            # plt.show()
-            #TODO: For DS 440 Group 6.
+            plt.step(time_history, 1 - np.array(best_valid_loss_history), where="post")
+            plt.savefig(log_file_name.replace(".log", ".pdf"))
+            # TODO: For DS 440 Group 6.
             # include more advanced visualizations based on the log file.
         elif level == 1:
             # Provided explination for the best model obtained in automl.
-            #TODO: For DS 440 Group 7.
+            # TODO: For DS 440 Group 7.
             # feature importance, SHAP value, LIME explination
             NotImplementedError
         elif level == 2:
-            # Provide in-depth explination for the automl process. 
-            # For example are there any 
+            # Provide in-depth explination for the automl process.
+            # For example are there any
             # hyperparamters are more important than the others
-            # TODO: 1. how the is search space explored; 
+            # TODO: 1. how the is search space explored;
             # 2. the importance of difference hypereparameters, via SHAP or LIME values
             NotImplementedError
         elif level == 3:
-            # TODO: Provide suggestions on how to improve the automl setting. 
+            # TODO: Provide suggestions on how to improve the automl setting.
             # For example, revision of the search space, time budget etc.
             NotImplementedError
         else:
             NotImplementedError
-    
+
     def _search_parallel(self):
         try:
             from ray import __version__ as ray_version
