@@ -2341,6 +2341,7 @@ class AutoML(BaseEstimator):
             plt.scatter(time_history, 1 - np.array(valid_loss_history))
             plt.step(time_history, 1 - np.array(best_valid_loss_history), where="post")
             plt.savefig(log_file_name.replace(".log", ".pdf"))
+
             # TODO: For DS 440 Group 6.
             # include more advanced visualizations based on the log file.
         elif level == 1:
