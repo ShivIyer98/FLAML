@@ -2309,7 +2309,7 @@ class AutoML(BaseEstimator):
             del self._state.groups, self._state.groups_all, self._state.groups_val
         logger.setLevel(old_level)
 
-    def diagnose(self, level=0):
+    def diagnose(self, level=0, type, train_data, test_data):
         """
         Diagnose AutoML.
 
@@ -2349,6 +2349,10 @@ class AutoML(BaseEstimator):
             # TODO: For DS 440 Group 7.
             # feature importance, SHAP value, LIME explination
             NotImplementedError
+            self._state.X_train
+            self._state.y_train
+            self._state.X_val
+            self._state.y_val
         elif level == 2:
             # Provide in-depth explination for the automl process.
             # For example are there any
