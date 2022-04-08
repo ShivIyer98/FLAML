@@ -44,6 +44,9 @@ setuptools.setup(
         ],
         "diagnose": [
             "matplotlib",
+            "lime",
+            "shap",
+            "IPython",
         ],
         "test": [
             "flake8>=3.8.4",
