@@ -2309,7 +2309,7 @@ class AutoML(BaseEstimator):
             del self._state.groups, self._state.groups_all, self._state.groups_val
         logger.setLevel(old_level)
 
-    def diagnose(self, level=0, type, train_data, test_data):
+    def diagnose(self, class_names, labels, problem_type, level=0, explainer = "LIME", row_index = 0, **kwargs):
         """
         Diagnose AutoML.
 
@@ -2348,13 +2348,62 @@ class AutoML(BaseEstimator):
             # Provided explination for the best model obtained in automl.
             # TODO: For DS 440 Group 7.
             # feature importance, SHAP value, LIME explination
-            NotImplementedError
-            self._state.X_train
-            self._state.y_train
-            self._state.X_val
-            self._state.y_val
+            # NotImplementedError
+            #self._state.X_train
+            #self._state.y_train
+            #self._state.X_val
+            #self._state.y_val
+
+            estimator = getattr(self, "_trained_estimator", None)
+            if estimator is None:
+                logger.warning(
+                    "No estimator is trained. Please run fit with enough budget."
+                )
+                return None
+
+            if explainer == "LIME":
+                import lime
+                from lime import lime_tabular
+                df_columns = pd.DataFrame(self._state.X_train)
+                labels = pd.DataFrame(labels)
+                if problem_type == "classification":
+                    print(self._state.X_train)
+                    explain = lime_tabular.LimeTabularExplainer(
+                    training_data=np.array(self._state.X_train),
+                    feature_names=df_columns,
+                    class_names= class_names,
+                    mode='classification',
+                    **kwargs)
+
+                    #print("True Label: {}\n".format(class_names[labels.values[row_index]]))
+
+                    
+                    exp = explain.explain_instance(data_row=df_columns.values[row_index], predict_fn = estimator.predict_proba, **kwargs)
+                    
+                    return exp.show_in_notebook(show_table=True)
+                
+                if problem_type == "regression":
+                    
+                    explain = lime_tabular.LimeTabularExplainer(
+                    training_data=np.array(self._state.X_train),
+                    feature_names = self._state.X_train.columns,
+                    mode='regression',
+                    **kwargs
+                    )
+
+                    print("True Label: {}\n".format(labels.values[row_index]))
+
+                    exp = explain.explain_instance(data_row=self._state.X_val.values[row_index], predict_fn=self._trained_estimator.predict, **kwargs)
+
+                if problem_type == "text":
+                    pass
+
+
+            if explainer == "SHAP":
+                pass
+
         elif level == 2:
-            # Provide in-depth explination for the automl process.
+            # Provide in-depth explination for the automl process
             # For example are there any
             # hyperparamters are more important than the others
             # TODO: 1. how the is search space explored;
