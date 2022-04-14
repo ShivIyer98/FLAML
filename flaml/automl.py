@@ -2309,7 +2309,8 @@ class AutoML(BaseEstimator):
             del self._state.groups, self._state.groups_all, self._state.groups_val
         logger.setLevel(old_level)
 
-    def diagnose(self, class_names, labels, problem_type, level=0, explainer = "LIME", row_index = 0, **kwargs):
+    def diagnose(self, problem_type, class_names = None, level=0, 
+    explainer = "LIME", row_index = 0, plot_type = "waterfall", model_type = None, **kwargs):
         """
         Diagnose AutoML.
 
@@ -2364,43 +2365,82 @@ class AutoML(BaseEstimator):
             if explainer == "LIME":
                 import lime
                 from lime import lime_tabular
-                df_columns = pd.DataFrame(self._state.X_train)
-                labels = pd.DataFrame(labels)
+                pandas_xtrain = pd.DataFrame(self._state.X_train)
+                pandas_xval = pd.DataFrame(self._state.X_val)
+                
                 if problem_type == "classification":
-                    print(self._state.X_train)
                     explain = lime_tabular.LimeTabularExplainer(
-                    training_data=np.array(self._state.X_train),
-                    feature_names=df_columns,
-                    class_names= class_names,
+                    training_data=self._state.X_train,
+                    feature_names=pandas_xtrain.columns,
+                    class_names= list(class_names.values()),
                     mode='classification',
                     **kwargs)
-
-                    #print("True Label: {}\n".format(class_names[labels.values[row_index]]))
-
                     
-                    exp = explain.explain_instance(data_row=df_columns.values[row_index], predict_fn = estimator.predict_proba, **kwargs)
-                    
+                    print("True Label: {}\n".format(class_names[self._state.y_train[row_index]]))
+
+                    exp = explain.explain_instance(data_row=pandas_xtrain.values[row_index], predict_fn = estimator.predict_proba, **kwargs)
+                    exp.save_to_file('lime_classification.html')
                     return exp.show_in_notebook(show_table=True)
                 
                 if problem_type == "regression":
-                    
                     explain = lime_tabular.LimeTabularExplainer(
-                    training_data=np.array(self._state.X_train),
-                    feature_names = self._state.X_train.columns,
+                    training_data= np.array(self._state.X_train),
+                    feature_names=pandas_xtrain.columns,
                     mode='regression',
-                    **kwargs
-                    )
-
-                    print("True Label: {}\n".format(labels.values[row_index]))
-
-                    exp = explain.explain_instance(data_row=self._state.X_val.values[row_index], predict_fn=self._trained_estimator.predict, **kwargs)
+                    **kwargs)
+                    
+                    print(self._state.X_val)
+                    print("True Label: {}\n".format(self._state.y_val[row_index]))
+                    
+                    exp = explain.explain_instance(data_row=self._state.X_val[row_index], predict_fn = estimator.predict, **kwargs)
+                    exp.save_to_file('lime_regression.html')
+                    return exp.show_in_notebook(show_table=True)
+                   
 
                 if problem_type == "text":
                     pass
 
 
             if explainer == "SHAP":
-                pass
+                import shap
+                if problem_type == "classification":
+                    if model_type == "linear":
+                        explainer = shap.LinearExplainer(estimator.predict_proba, self.train_data, feature_dependence="independent")
+
+                    elif model_type == "tree":
+                        explainer = shap.TreeExplainer(estimator.predict_proba)
+                    
+                    else:
+                        explainer = shap.KernelExplainer(estimator.predict_proba, self._state.X_train)
+                    
+                    shap_values = explainer.shap_values(self._state.X_val)
+                    return shap.summary_plot(shap_values, self._state.X_val)
+
+                if problem_type == "regression":
+                    print(self._state.X_val)
+                    if plot_type == "waterfall":
+                        explainer = shap.Explainer(estimator.model)
+                        shap_values = explainer(self._state.X_train)
+                        return shap.plots.waterfall(shap_values[row_index])
+                    
+                    if plot_type == "bar":
+                        explainer = shap.Explainer(estimator.model)
+                        shap_values = explainer(self._state.X_train)
+                        return shap.plots.bar(shap_values)
+
+                    if plot_type == "beeswarm":
+                        explainer = shap.Explainer(estimator.model)
+                        shap_values = explainer(self._state.X_train)
+                        return shap.plots.beeswarm(shap_values)
+
+                    if plot_type == "force":
+                        shap.initjs()
+                        explainer = shap.Explainer(estimator.model)
+                        shap_values = explainer(self._state.X_train)
+                        shap_plot = shap.plots.force(shap_values[row_index])
+                        shap.save_html("shap_regression.html", shap_plot)
+                        return shap_plot
+                        
 
         elif level == 2:
             # Provide in-depth explination for the automl process
